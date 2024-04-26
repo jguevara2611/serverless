@@ -1,0 +1,76 @@
+service: serverless-test
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: 'us-east-2'
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:*:*:table/${self:custom.tableName}"
+  environment:
+    DYNAMODB_TABLE: ${self:custom.tableName}
+    URL_SWAPI: https://swapi.py4e.com/api/
+
+custom:
+  tableName: MoviesTable
+
+functions:
+  createMovie:
+      handler: src/addMovie.addMovie
+      events:
+        - httpApi:
+            path: /movies
+            method: post
+  getFilms:
+    handler: src/getFilms.getFilms
+    events:
+      - httpApi:
+          path: /films
+          method: get
+  getMovies:
+    handler: src/getMovies.getMovies
+    events:
+      - httpApi:
+          path: /movies
+          method: get
+  getMovie:
+    handler: src/getMovie.getMovie
+    events:
+      - httpApi:
+          path: /movies/{id}
+          method: get
+  updateMovie:
+    handler: src/updateMovie.updateMovie
+    events:
+      - httpApi:
+          path: /movies/{id}
+          method: put
+  deleteMovie:
+    handler: src/deleteMovie.deleteMovie
+    events:
+      - httpApi:
+          path: /movies/{id}
+          method: delete
+
+resources:
+  Resources:
+    MyDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
